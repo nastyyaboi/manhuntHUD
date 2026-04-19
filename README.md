@@ -4,6 +4,8 @@ a manhunt hud mod for GTA SA (1.0)
 # requirements
 [Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader)
 
+check the ini file for controls
+
 # credits
 opiumdealer, Mysterious Sneed
 
