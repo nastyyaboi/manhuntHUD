@@ -69,8 +69,8 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_NON_CONFORMING_SWPRINTFS;TARGET_NAME=R"($(TargetName))";GTASA;GTAGAME_NAME="San Andreas";GTAGAME_ABBR="SA";GTAGAME_ABBRLOW="sa";GTAGAME_PROTAGONISTNAME="CJ";GTAGAME_CITYNAME="San Andreas";_DX9_SDK_INSTALLED;PLUGIN_SGV_10US;RW;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(PLUGIN_SDK_DIR)\Plugin_SA;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\rw;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_NON_CONFORMING_SWPRINTFS;TARGET_NAME=R"($(TargetName))";GTASA;GTAGAME_NAME="San Andreas";GTAGAME_ABBR="SA";GTAGAME_ABBRLOW="sa";GTAGAME_PROTAGONISTNAME="CJ";GTAGAME_CITYNAME="San Andreas";_DX9_SDK_INSTALLED;PLUGIN_SGV_10US;RW;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(PLUGIN_SDK_DIR)\plugin_sa;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\plugin_sa\game_sa;E:\plugin-sdk\shared;E:\plugin-sdk\shared\game;E:\plugin-sdk\plugin_sa\game_sa;E:\plugin-sdk\plugin_sa;E:\plugin-sdk\shared\game\;E:\plugin-sdk\plugin_sa\game_sa\enums;E:\plugin-sdk\plugin_sa\game_sa\meta;E:\plugin-sdk\plugin_sa\game_sa\rw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -82,6 +82,7 @@
       <AdditionalOptions>/sdl- /std:c++latest %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
+      <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -94,10 +95,11 @@
       <ImportLibrary>bin\GTA-SA\Release\ManhuntHud.SA.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>if defined GTA_SA_DIR (copy /y "$(TargetPath)" "%GTA_SA_DIR%\scripts\$(TargetFileName)") else (echo GTA_SA_DIR not defined)</Command>
+      <Command>copy /Y "E:\plugin-sdk\tools\myplugin-gen\generated\ManhuntHud\bin\GTA-SA\Release\ManhuntHud.SA.asi" "D:\GTA San Andreas\GTA San Andreas\scripts\ManhuntHud.SA.asi"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>copy /y "E:\plugin-sdk\tools\myplugin-gen\generated\ManhuntHud\bin\GTA-SA\Release\ManhuntHud.SA.asi" "D:\GTA San Andreas\GTA San Andreas\scripts\ManhuntHud.SA.asi"</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug GTA-SA|Win32'">

@@ -88,7 +88,6 @@ public:
                         char* translatedText = const_cast<char*>(TheText.Get(CUserDisplay::OnscnTimer.m_aCounters[i].m_szDescriptionTextKey));
                         ForcedScmTextPosition(posX, baseY, translatedText);
                     }
-
                     baseY += 19.0f;
                 }
                 else {
@@ -107,8 +106,10 @@ public:
         }
 
         if (CUserDisplay::OnscnTimer.m_Clock.m_bEnabled) {
-            float clockX = posX + 19.0f;
-            if (bAnyBarActive) clockX -= 55.0f;
+            float clockX = posX;
+            if (bAnyBarActive) {
+                clockX = (posX + 19.0f) - 55.0f;
+            }
 
             float clockY = baseY + 120.0f;
             DrawManhuntTextElement(clockX, clockY, CUserDisplay::OnscnTimer.m_Clock.m_szDisplayedText,
@@ -127,6 +128,7 @@ public:
         CFont::SetDropShadowPosition(0);
         CFont::SetEdge(0);
         CFont::SetDropColor(CRGBA(0, 0, 0, 255));
+        CFont::SetWrapx(2000.0f); 
 
         CFont::SetOrientation(ALIGN_RIGHT);
         CFont::SetColor(CRGBA(0, 0, 0, 255));
@@ -151,6 +153,7 @@ public:
         CFont::SetOrientation(ALIGN_RIGHT);
         CFont::SetDropShadowPosition(0);
         CFont::SetDropColor(CRGBA(0, 0, 0, 255));
+        CFont::SetWrapx(2000.0f); 
 
         CFont::SetColor(CRGBA(0, 0, 0, 255));
         CFont::PrintString(LX(x + 87.8f - 15.0f + shadowOffset), L(y + 100.0f + shadowOffset), text);
