@@ -13,7 +13,7 @@ using namespace plugin;
 
 extern float breathVisibilityTimerShared;
 extern int nPeekKey;
-extern bool bHudEnabledInIni;
+extern bool g_bFinalHudStatus;
 
 class GrandfatherClock {
 public:
@@ -21,7 +21,7 @@ public:
     static float Res(float value) { return value * ((float)RsGlobal.maximumHeight / 960.0f); }
 
     static void Draw() {
-        if (CCutsceneMgr::ms_cutsceneProcessing || TheCamera.m_bWideScreenOn || !bHudEnabledInIni) {
+        if (CCutsceneMgr::ms_cutsceneProcessing || TheCamera.m_bWideScreenOn || !g_bFinalHudStatus) {
             nDisplayTimer = 0.0f;
             return;
         }
@@ -33,20 +33,20 @@ public:
 
         if (nDisplayTimer > 0.0f) {
             nDisplayTimer -= CTimer::ms_fTimeStep;
-            float s = (float)RsGlobal.maximumHeight / 960.0f;
+            float s = (float)RsGlobal.maximumHeight / 1000.0f;
 
             int nAlpha = std::clamp((nDisplayTimer < 20.0f) ? (int)(nDisplayTimer * 12.5f) : 255, 0, 255);
 
             char timeStr[16];
             sprintf(timeStr, "%02d:%02d", CClock::ms_nGameClockHours, CClock::ms_nGameClockMinutes);
 
-            float hX = (float)RsGlobal.maximumWidth - Res(80.0f);
-            float hY = (float)RsGlobal.maximumHeight - Res(55.0f);
+            float hX = (float)RsGlobal.maximumWidth - Res(83.5f);
+            float hY = (float)RsGlobal.maximumHeight - Res(70.0f);
 
             float xOffset = Res(60.0f);
 
-            if (player->m_fArmour > 1.0f) xOffset += Res(23.0f);
-            if (breathVisibilityTimerShared > 0.0f) xOffset += Res(23.0f);
+            //if (player->m_fArmour > 1.0f) xOffset += Res(23.0f);
+            //if (breathVisibilityTimerShared > 0.0f) xOffset += Res(23.0f);
 
             CFont::SetOrientation(ALIGN_CENTER);
             CFont::SetFontStyle(FONT_PRICEDOWN);

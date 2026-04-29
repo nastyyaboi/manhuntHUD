@@ -12,7 +12,7 @@
 using namespace plugin;
 
 extern int nPeekKey; 
-extern bool bHudEnabledInIni;
+extern bool g_bFinalHudStatus;
 
 class VehicleName {
 public:
@@ -20,11 +20,11 @@ public:
     static CVehicle* pLastVehicle;
 
     static float Res(float value) {
-        return value * ((float)RsGlobal.maximumHeight / 960.0f);
+        return value * ((float)RsGlobal.maximumHeight / 990.0f);
     }
 
     static void Draw() {
-        if (CCutsceneMgr::ms_cutsceneProcessing || TheCamera.m_bWideScreenOn || !bHudEnabledInIni) {
+        if (CCutsceneMgr::ms_cutsceneProcessing || TheCamera.m_bWideScreenOn || !g_bFinalHudStatus) {
             nDisplayTimer = 0.0f;
             return;
         }
@@ -73,8 +73,8 @@ public:
                     CFont::SetDropShadowPosition(1);
                     CFont::SetDropColor(CRGBA(0, 0, 0, nAlpha));
 
-                    float x = (float)RsGlobal.maximumWidth - Res(30.0f);
-                    float y = (float)RsGlobal.maximumHeight / 2.2f;
+                    float x = (float)RsGlobal.maximumWidth - Res(50.0f);
+                    float y = (float)RsGlobal.maximumHeight / 2.0f;
                     CFont::PrintString(x, y, vehName);
                 }
             }

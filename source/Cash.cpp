@@ -10,7 +10,7 @@
 
 using namespace plugin;
 
-extern bool bHudEnabledInIni;
+extern bool g_bFinalHudStatus;
 extern int nPeekKey;
 float moneyTimerShared = 0.0f;
 bool moneyDiffVisibleShared = false;
@@ -31,7 +31,7 @@ public:
     }
 
     static void Draw() {
-        if (!bHudEnabledInIni) return;
+        if (!g_bFinalHudStatus) return;
 
         int currentMoney = *(int*)0xB7CE50;
 
@@ -82,7 +82,7 @@ public:
             CFont::SetColor(CRGBA(255, 255, 255, 255));
             CFont::SetScale(1.0f * s, 1.9f * s);
 
-            CFont::PrintString((float)RsGlobal.maximumWidth - Res(70.0f), Res(60.0f), str);
+            CFont::PrintString((float)RsGlobal.maximumWidth - Res(75.0f), Res(65.0f), str);
         }
 
         if (bShowMoneyDifference && m_nDiffMoney != 0) {
@@ -110,7 +110,7 @@ public:
                 CFont::SetColor(m_nDiffMoney > 0 ? CRGBA(0, 180, 0, nMoneyDifferenceFadeAlpha) : CRGBA(180, 0, 0, nMoneyDifferenceFadeAlpha));
                 CFont::SetScale(0.6f * s, 1.3f * s);
 
-                CFont::PrintString((float)RsGlobal.maximumWidth - Res(70.0f), Res(100.0f), diffStr);
+                CFont::PrintString((float)RsGlobal.maximumWidth - Res(75.0f), Res(105.0f), diffStr);
             }
         }
         else moneyDiffVisibleShared = false;

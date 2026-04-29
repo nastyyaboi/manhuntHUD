@@ -8,6 +8,7 @@
 #include "CFont.h"
 #include "CCamera.h"
 #include "CText.h"
+#include "CMenuManager.h"
 #include "CHud.h"
 #include "CTimer.h"
 #include <windows.h>
@@ -21,6 +22,8 @@ float breathGracePeriod = 0.0f;
 int nToggleKey = 0x4C;
 int nPeekKey = 0xBE;
 bool bHudEnabledInIni = true;
+bool g_bFinalHudStatus = true;
+bool bMenuSettingMemory = true;
 
 static const char* weaponTextureNames[] = {
     "fist", "brassknuckle", "golfclub", "nitestick", "knifecur", "batcur", "shovel", "poolcue", "katana", "chnsaw",
@@ -31,6 +34,22 @@ static const char* weaponTextureNames[] = {
     "detonator", "spraycan", "fire_ex", "camera", "nvgoog", "irgoog", "parachute"
 };
 
+static const char* weaponCleanNames[] = {
+    "Fist", "Brass Knuckles", "Golf Club", "Nightstick", "Knife", "Baseball Bat", "Shovel", "Pool Cue", "Katana", "Chainsaw",
+    "Long Dildo", "Short Dildo", "Long Vibrator", "Short Vibrator", "Flowers", "Cane",
+    "Grenade", "Tear Gas", "Molotov", "", "", "",
+    "Pistol", "Silenced Pistol", "Desert Eagle", "Shotgun", "Sawed-off Shotgun", "Combat Shotgun", "Micro Uzi", "MP5",
+    "AK-47", "M4", "Tec-9", "Country Rifle", "Sniper Rifle", "Rocket Launcher", "Heat-Seeking Rocket Launcher", "Flamethrower", "Minigun", "Satchel",
+    "Detonator", "Spray Can", "Fire Extinguisher", "Camera", "Night-Vision Goggles", "Thermal Goggles", "Parachute"
+};
+
+
+class VehicleName {
+public:
+    static float nDisplayTimer;
+};
+extern float nDisplayTimer;
+
 class MHud {
 public:
     static CSprite2d outlineSprite;
@@ -38,9 +57,10 @@ public:
     static CSprite2d weaponSprites[47];
     static bool bLoaded;
     static float lastBreath;
+    static unsigned int weaponNameDisplayEndTime;
 
     static float Res(float value) {
-        return value * ((float)RsGlobal.maximumHeight / 960.0f);
+        return value * ((float)RsGlobal.maximumHeight / 1080.0f);
     }
 
     static std::string GetModFolder() {
@@ -97,6 +117,21 @@ public:
             };
 
         Events::gameProcessEvent += [] {
+            static bool bLastMenuActive = false;
+            bool bMenuActive = FrontEndMenuManager.m_bMenuActive;
+
+            if (bMenuActive && !bLastMenuActive) {
+                *(unsigned char*)0xBA6769 = bMenuSettingMemory ? 1 : 0;
+            }
+
+            if (bMenuActive) {
+                bMenuSettingMemory = (*(unsigned char*)0xBA6769 != 0);
+            }
+            else {
+                if (bMenuSettingMemory) *(unsigned char*)0xBA6769 = 0;
+            }
+            bLastMenuActive = bMenuActive;
+
             static bool bKeyHeld = false;
             bool bTogglePressed = (GetKeyState(nToggleKey) & 0x8000) != 0;
             if (bTogglePressed && !bKeyHeld) {
@@ -106,26 +141,45 @@ public:
             else if (!bTogglePressed) {
                 bKeyHeld = false;
             }
-            *(bool*)0xBA6769 = false;
+
+            static int lastWeapon = -1;
+            CPlayerPed* p = FindPlayerPed();
+            if (p && p->m_pPlayerData) {
+                int currentWeapon = p->m_aWeapons[p->m_nSelectedWepSlot].m_eWeaponType;
+                bool bPeekPressed = (GetKeyState(nPeekKey) & 0x8000) != 0;
+
+                if (lastWeapon == -1) lastWeapon = currentWeapon;
+
+
+                if (currentWeapon != lastWeapon || bPeekPressed) {
+                    MHud::weaponNameDisplayEndTime = CTimer::m_snTimeInMilliseconds + 2500;
+                    lastWeapon = currentWeapon;
+                }
+            }
+
+            g_bFinalHudStatus = bHudEnabledInIni && bMenuSettingMemory;
             };
 
-        Events::drawHudEvent += [] {
-            if (bLoaded && bHudEnabledInIni) DrawBars();
+        Events::drawingEvent += [] {
+            if (!FrontEndMenuManager.m_bMenuActive) {
+                DrawBars();
+            }
             };
     }
 
     static void DrawBars() {
+        if (!g_bFinalHudStatus) return;
         if (TheCamera.m_bWideScreenOn || *(bool*)0xB5F138) return;
         CPlayerPed* player = FindPlayerPed();
         if (!player || !player->m_pPlayerData || !outlineSprite.m_pTexture) return;
 
         float screenW = (float)RsGlobal.maximumWidth;
         float screenH = (float)RsGlobal.maximumHeight;
-        float s = screenH / 960.0f;
+        float s = screenH / 1080.0f;
         float barW = Res(11.0f);
-        float barMaxH = Res(248.3f);
-        float hX = screenW - Res(80.0f);
-        float hY = screenH - Res(55.0f);
+        float barMaxH = Res(196.0f);
+        float hX = screenW - Res(136.0f);
+        float hY = screenH - Res(110.0f);
 
         auto DrawRoundedBar = [&](float x, float y, float w, float h, CRGBA color) {
             CSprite2d::DrawRect(CRect(x + 1.0f, y - h, x + w - 1.0f, y), color);
@@ -133,9 +187,9 @@ public:
             };
 
         float headW = Res(600.0f);
-        float headH = (headW * 512.0f) / 3547.0f;
-        float headYPos = hY - barMaxH - Res(70.0f);
-        float headLeftEdge = (screenW + Res(320.0f)) - headW;
+        float headH = (headW * 412.0f) / 3000.0f;
+        float headYPos = hY - barMaxH - Res(84.5f);
+        float headLeftEdge = (screenW + Res(285.0f)) - headW;
 
         int activeSlot = player->m_nSelectedWepSlot;
         CWeapon& activeWep = player->m_aWeapons[activeSlot];
@@ -156,10 +210,51 @@ public:
         if (headerSprite.m_pTexture)
             headerSprite.Draw(CRect(headLeftEdge, headYPos - headH, screenW + Res(320.0f), headYPos), headerColor);
 
+        unsigned int currentTime = CTimer::m_snTimeInMilliseconds;
+
+        if (weaponId >= 0 && weaponId < 47 && currentTime < MHud::weaponNameDisplayEndTime) {
+
+            if (VehicleName::nDisplayTimer <= 0.0f) {
+
+                const char* weaponName = weaponCleanNames[weaponId];
+                if (weaponName && weaponName[0] != '\0') {
+
+                    unsigned int timeLeft = MHud::weaponNameDisplayEndTime - currentTime;
+                    int alpha = 255;
+                    if (timeLeft < 1000) {
+                        alpha = static_cast<int>((timeLeft / 1000.0f) * 255.0f);
+                    }
+
+                    CFont::SetFontStyle(FONT_SUBTITLES);
+                    CFont::SetScale(0.8f * s, 1.5f * s);
+
+                    float centerX = headLeftEdge + (headW / 2.0f) - Res(157.0f);
+                    float textY = headYPos - headH + Res(-60.0f);
+
+                    float stringWidth = CFont::GetStringWidth((char*)weaponName, true);
+                    float halfWidth = stringWidth / 2.0f;
+                    float rightBoundary = (float)RsGlobal.maximumWidth - Res(25.0f);
+                    float textX = centerX;
+
+                    if (textX + halfWidth > rightBoundary) {
+                        textX = rightBoundary - halfWidth;
+                    }
+
+                    CFont::SetDropShadowPosition(1);
+                    CFont::SetDropColor(CRGBA(0, 0, 0, alpha));
+                    CFont::SetColor(CRGBA(255, 255, 255, alpha));
+                    CFont::SetOrientation(ALIGN_CENTER);
+                    CFont::SetWrapx((float)RsGlobal.maximumWidth * 2.0f);
+
+                    CFont::PrintString(textX, textY, (char*)weaponName);
+                }
+            }
+        }
+
         if (activeSlot > 1 && activeWep.m_eWeaponType > 1 && activeWep.m_eWeaponType < 44 && activeWep.m_eWeaponType != 21 && weaponId != 40 && (weaponId < 10 || weaponId > 15)) {
             CWeaponInfo* info = CWeaponInfo::GetWeaponInfo(activeWep.m_eWeaponType, player->GetWeaponSkill());
 
-            float centerX = headLeftEdge + (headW / 2.0f) - Res(137.0f);
+            float centerX = headLeftEdge + (headW / 2.0f) - Res(157.0f);
             float centerY = headYPos + Res(24.0f);
 
             CFont::SetFontStyle(FONT_SUBTITLES);
@@ -200,8 +295,8 @@ public:
         }
 
         if (weaponId >= 0 && weaponId < 47 && weaponSprites[weaponId].m_pTexture) {
-            float wX = (hX + (barW / 2.0f) - Res(60.0f)) - Res(45.0f);
-            float wY = (headYPos - headH - Res(15.0f)) + Res(118.0f);
+            float wX = (hX + (barW / 2.0f) - Res(60.0f)) - Res(40.0f);
+            float wY = (headYPos - headH - Res(15.0f)) + Res(114.0f);
             float imgSz = Res(120.0f);
             weaponSprites[weaponId].Draw(wX, wY, wX + imgSz, wY, wX, wY - imgSz, wX + imgSz, wY - imgSz, CRGBA(255, 255, 255, 255));
         }
@@ -211,14 +306,14 @@ public:
         float healthPerc = std::clamp(player->m_fHealth / maxHealth, 0.0f, 1.0f);
         float armorPerc = std::clamp(player->m_fArmour / 100.0f, 0.0f, 1.0f);
 
-        DrawRoundedBar(hX, hY, barW, barMaxH, CRGBA(37, 35, 19, 150));
-        DrawRoundedBar(hX, hY, barW, barMaxH * healthPerc, CRGBA(255, 254, 161, 200));
+        DrawRoundedBar(hX, hY, barW, barMaxH, CRGBA(26, 32, 15, 150)); 
+        DrawRoundedBar(hX, hY, barW, barMaxH * healthPerc, CRGBA(194, 252, 116, 200));
         outlineSprite.Draw(CRect(hX - Res(3.0f), hY - barMaxH - Res(4.0f), hX + barW + Res(3.0f), hY + Res(4.0f)), CRGBA(255, 255, 255, 255));
 
         if (player->m_fArmour > 1.0f) {
             float aX = hX - Res(23.0f);
-            DrawRoundedBar(aX, hY, barW, barMaxH, CRGBA(26, 32, 15, 150));
-            DrawRoundedBar(aX, hY, barW, barMaxH * armorPerc, CRGBA(194, 252, 116, 200));
+            DrawRoundedBar(aX, hY, barW, barMaxH, CRGBA(37, 35, 19, 150));
+            DrawRoundedBar(aX, hY, barW, barMaxH * armorPerc, CRGBA(255, 254, 161, 200));
             outlineSprite.Draw(CRect(aX - Res(3.0f), hY - barMaxH - Res(4.0f), aX + barW + Res(3.0f), hY + Res(4.0f)), CRGBA(255, 255, 255, 255));
         }
 
@@ -253,5 +348,6 @@ CSprite2d MHud::headerSprite;
 CSprite2d MHud::weaponSprites[47];
 bool MHud::bLoaded = false;
 float MHud::lastBreath = -1.0f;
+unsigned int MHud::weaponNameDisplayEndTime = 0;
 
 MHud mHud;

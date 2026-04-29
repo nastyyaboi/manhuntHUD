@@ -14,7 +14,7 @@ static bool isLoaded = false;
 static CSprite2d mHudSprite;
 static CSprite2d mBarFrame;
 
-const CVector2D mHudPos(155.0f, 150.0f);
+const CVector2D mHudPos(195.5f, 183.5f);
 const float mHudBaseSize = 93.0f;
 const float mHudRingSize = 100.0f;
 

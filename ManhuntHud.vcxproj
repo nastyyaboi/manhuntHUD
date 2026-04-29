@@ -137,6 +137,8 @@ xcopy /Y "$(TargetPath)" "$(GTA_SA_DIR)\scripts"
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="source\Clock.cpp" />
+    <ClCompile Include="source\CutscenePause.cpp" />
+    <ClCompile Include="source\FX.cpp" />
     <ClCompile Include="source\Main.cpp" />
     <ClCompile Include="source\Cash.cpp" />
     <ClCompile Include="source\ManStatus.cpp" />
@@ -144,6 +146,7 @@ xcopy /Y "$(TargetPath)" "$(GTA_SA_DIR)\scripts"
     <ClCompile Include="source\MHCore.cpp" />
     <ClCompile Include="source\MissionTimer.cpp" />
     <ClCompile Include="source\Radar.cpp" />
+    <ClCompile Include="source\SceneStatus.cpp" />
     <ClCompile Include="source\Subtitles.cpp" />
     <ClCompile Include="source\VehicleName.cpp" />
     <ClCompile Include="source\WantedLevel.cpp" />

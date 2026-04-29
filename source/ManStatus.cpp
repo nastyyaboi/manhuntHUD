@@ -13,7 +13,7 @@
 using namespace plugin;
 
 extern float breathVisibilityTimerShared;
-extern bool bHudEnabledInIni;
+extern bool g_bFinalHudStatus;
 
 class ManStatus {
 public:
@@ -71,7 +71,7 @@ public:
 
         float hX = (float)RsGlobal.maximumWidth - Res(80.0f);
         float hY = (float)RsGlobal.maximumHeight - Res(55.0f);
-        float xOffset = Res(75.0f);
+        float xOffset = Res(100.0f);
 
         if (state == 0) xOffset -= Res(30.0f);
         else if (state == 1) xOffset -= Res(20.0f);
@@ -81,21 +81,21 @@ public:
         if (player->m_fArmour > 1.0f) xOffset += Res(23.0f);
         if (breathVisibilityTimerShared > 0.0f) xOffset += Res(23.0f);
 
-        float w = Res(110.0f);
-        float h = Res(220.0f);
+        float w = Res(80.0f);
+        float h = Res(158.0f);
 
-        if (state == 3) { w = Res(220.0f); h = Res(220.0f); }
-        else if (state == 2) { w = Res(115.0f); h = Res(232.0f); }
+        if (state == 3) { w = Res(158.0f); h = Res(158.0f); }
+        else if (state == 2) { w = Res(86.0f); h = Res(167.0f); }
 
         float posX = (hX - xOffset) - (w / 2.0f);
-        float posY = (hY - Res(25.0f)) - h - Res(5.0f);
+        float posY = (hY - Res(25.0f)) - h - Res(15.0f);
 
         color.a = (unsigned char)masterAlpha;
         currentSprite->Draw(CRect(posX, posY, posX + w, posY + h), color);
     }
 
     static void Draw() {
-        if (CCutsceneMgr::ms_cutsceneProcessing || TheCamera.m_bWideScreenOn || !bHudEnabledInIni) return;
+        if (CCutsceneMgr::ms_cutsceneProcessing || TheCamera.m_bWideScreenOn || !g_bFinalHudStatus) return;
 
         CPlayerPed* player = FindPlayerPed();
         if (!player || !bLoaded) return;

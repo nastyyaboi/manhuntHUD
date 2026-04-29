@@ -14,7 +14,7 @@ using namespace plugin;
 
 extern float moneyTimerShared;
 extern bool moneyDiffVisibleShared;
-extern bool bHudEnabledInIni;
+extern bool g_bFinalHudStatus;
 extern int nPeekKey;
 
 static RwTexture* (__cdecl* _RwTextureRead)(const char*, const char*) = (RwTexture * (__cdecl*)(const char*, const char*))0x7F3AC0;
@@ -42,7 +42,7 @@ public:
     }
 
     static void Draw() {
-        if (!bHudEnabledInIni) return;
+        if (!g_bFinalHudStatus) return;
 
         int wantedLevel = 0;
         CPlayerPed* player = FindPlayerPed();
@@ -57,10 +57,10 @@ public:
             nWantedTimer -= CTimer::ms_fTimeStep;
             float starSize = Res(30.5f);
             float spacing = Res(1.0f);
-            float xBase = (float)RsGlobal.maximumWidth - Res(70.0f) - starSize;
-            float y = Res(60.0f);
+            float xBase = (float)RsGlobal.maximumWidth - Res(74.0f) - starSize;
+            float y = Res(70.0f);
 
-            if (moneyTimerShared > 0.0f) y = moneyDiffVisibleShared ? Res(130.0f) : Res(96.0f);
+            if (moneyTimerShared > 0.0f) y = moneyDiffVisibleShared ? Res(130.0f) : Res(99.0f);
 
             CRGBA activeColor = GetFlashColor();
             for (int i = 0; i < 6; i++) {

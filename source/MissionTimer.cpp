@@ -9,6 +9,7 @@
 #include "CText.h"
 #include "CHudColours.h"
 #include <string>
+#include <algorithm>
 
 using namespace plugin;
 
@@ -17,14 +18,8 @@ public:
     static CSprite2d outlineSprite;
     static bool bLoaded;
 
-    static float L(float coord1080) {
-        return coord1080 * ((float)RsGlobal.maximumHeight / 1080.0f);
-    }
-
-    static float LX(float x1080) {
-        float targetRatio = 1920.0f / 1080.0f;
-        float diff = ((float)RsGlobal.maximumWidth - (targetRatio * (float)RsGlobal.maximumHeight));
-        return (x1080 * ((float)RsGlobal.maximumHeight / 1080.0f)) + diff;
+    static float Res(float value) {
+        return value * ((float)RsGlobal.maximumHeight / 1080.0f);
     }
 
     static std::string GetModFolder() {
@@ -67,138 +62,143 @@ public:
         if (CUserDisplay::OnscnTimer.m_bDisplay != 1)
             return;
 
-        float posX = 1741.0f;
-        float baseY = 190.0f;
-        bool bAnyBarActive = false;
+        float targetRatio = 1920.0f / 1080.0f;
+        float currentScale = (float)RsGlobal.maximumHeight / 1080.0f;
+        float aspectDiff = ((float)RsGlobal.maximumWidth - (targetRatio * (float)RsGlobal.maximumHeight));
+        float posX = 1741.0f - (aspectDiff / currentScale);
 
+        bool bAnyBarsActive = false;
         for (int i = 0; i < 4; ++i) {
             if (CUserDisplay::OnscnTimer.m_aCounters[i].m_bEnabled && CUserDisplay::OnscnTimer.m_aCounters[i].m_nType == 1) {
-                bAnyBarActive = true;
+                bAnyBarsActive = true;
                 break;
             }
+        }
+
+        float screenW = (float)RsGlobal.maximumWidth;
+        float screenH = (float)RsGlobal.maximumHeight;
+        float barMaxH = Res(196.0f);
+
+        float dynamicOffsetX = bAnyBarsActive ? 0.0f : Res(60.0f);
+
+        float hX = screenW - Res(136.0f) + dynamicOffsetX;
+        float hY = screenH - Res(110.0f);
+
+        float textBaseY = hY - barMaxH - Res(410.0f);
+        float barPosX = hX;
+        float textToBarGap = Res(110.0f);
+        float lineSpacing = Res(25.0f);   
+        float verticalCentering = Res(105.0f); 
+        float currentTextY;
+        if (bAnyBarsActive) {
+
+            currentTextY = textBaseY - verticalCentering;
+        }
+        else {
+            currentTextY = textBaseY;
         }
 
         for (int i = 0; i < 4; ++i) {
             if (CUserDisplay::OnscnTimer.m_aCounters[i].m_bEnabled) {
                 if (CUserDisplay::OnscnTimer.m_aCounters[i].m_nType == 1) {
+
                     float progress = (float)atoi(CUserDisplay::OnscnTimer.m_aCounters[i].m_szDisplayedText);
-                    MyDrawProgressBar(posX, baseY, 100, 20, progress, 0, 0, 0, HudColour.GetRGB(CUserDisplay::OnscnTimer.m_aCounters[i].m_nColourId, 255), CRGBA(0, 0, 0, 0));
+
+                    MyDrawProgressBar(barPosX, textBaseY, 100, 20, progress, 0, 0, 0,
+                        HudColour.GetRGB(CUserDisplay::OnscnTimer.m_aCounters[i].m_nColourId, 255), CRGBA(0, 0, 0, 0));
+
 
                     if (CUserDisplay::OnscnTimer.m_aCounters[i].m_szDescriptionTextKey[0]) {
                         char* translatedText = const_cast<char*>(TheText.Get(CUserDisplay::OnscnTimer.m_aCounters[i].m_szDescriptionTextKey));
-                        ForcedScmTextPosition(posX, baseY, translatedText);
-                    }
-                    baseY += 19.0f;
-                }
-                else {
-                    float counterX = posX;
-                    if (bAnyBarActive) {
-                        counterX = (posX + 19.0f) - 55.0f;
+                        if (!translatedText || !translatedText[0]) {
+                            translatedText = CUserDisplay::OnscnTimer.m_aCounters[i].m_szDescriptionTextKey;
+                        }
+                        DrawManhuntTextElement(barPosX - Res(25.0f), textBaseY - Res(25.0f), "", translatedText, CRGBA(255, 255, 255, 255));
                     }
 
-                    DrawManhuntTextElement(counterX, baseY, CUserDisplay::OnscnTimer.m_aCounters[i].m_szDisplayedText,
+
+                    barPosX -= Res(45.0f);
+                }
+                else {
+                    DrawManhuntTextElement(hX - textToBarGap, currentTextY,
+                        CUserDisplay::OnscnTimer.m_aCounters[i].m_szDisplayedText,
                         CUserDisplay::OnscnTimer.m_aCounters[i].m_szDescriptionTextKey,
                         HudColour.GetRGB(CUserDisplay::OnscnTimer.m_aCounters[i].m_nColourId, 255));
 
-                    baseY += 55.0f;
+                    currentTextY += lineSpacing;
                 }
             }
         }
 
         if (CUserDisplay::OnscnTimer.m_Clock.m_bEnabled) {
-            float clockX = posX;
-            if (bAnyBarActive) {
-                clockX = (posX + 19.0f) - 55.0f;
-            }
-
-            float clockY = baseY + 120.0f;
-            DrawManhuntTextElement(clockX, clockY, CUserDisplay::OnscnTimer.m_Clock.m_szDisplayedText,
+            DrawManhuntTextElement(hX - textToBarGap, currentTextY,
+                CUserDisplay::OnscnTimer.m_Clock.m_szDisplayedText,
                 CUserDisplay::OnscnTimer.m_Clock.m_szDescriptionTextKey,
                 HudColour.GetRGB(HUD_COLOUR_BLUELIGHT, 255));
         }
     }
 
-    static void DrawManhuntTextElement(float x, float y, char* value, char* descriptionKey, CRGBA color) {
-        float drawX = x + 87.8f;
-        float shadowOffset = 2.2f;
-
+    static void DrawManhuntTextElement(float x, float y, const char* value, const char* description, CRGBA color) {
         CFont::SetFontStyle(FONT_SUBTITLES);
-        CFont::SetScale(L(0.60f), L(1.2f));
-        CFont::SetAlphaFade(255.0f);
-        CFont::SetDropShadowPosition(0);
-        CFont::SetEdge(0);
+        CFont::SetScale(Res(0.7f), Res(1.3f));
+        CFont::SetEdge(1);
         CFont::SetDropColor(CRGBA(0, 0, 0, 255));
-        CFont::SetWrapx(2000.0f); 
-
         CFont::SetOrientation(ALIGN_RIGHT);
-        CFont::SetColor(CRGBA(0, 0, 0, 255));
-        CFont::PrintString(LX(drawX + 22.0f + shadowOffset), L(y + shadowOffset), value);
-        CFont::SetColor(color);
-        CFont::PrintString(LX(drawX + 22.0f), L(y), value);
 
-        if (descriptionKey && descriptionKey[0]) {
-            char* translatedText = const_cast<char*>(TheText.Get(descriptionKey));
-            CFont::SetOrientation(ALIGN_LEFT);
-            CFont::SetColor(CRGBA(0, 0, 0, 255));
-            CFont::PrintString(LX(drawX - 150.0f + shadowOffset), L(y + shadowOffset), translatedText);
-            CFont::SetColor(CRGBA(255, 255, 255, 255));
-            CFont::PrintString(LX(drawX - 150.0f), L(y), translatedText);
+        float spacing = Res(100.0f);
+
+        if (value && value[0]) {
+            CFont::SetColor(color);
+
+            CFont::PrintString(x + spacing, y, const_cast<char*>(value));
         }
-    }
 
-    static void __cdecl ForcedScmTextPosition(float x, float y, char* text) {
-        float shadowOffset = 2.2f;
-        CFont::SetFontStyle(FONT_SUBTITLES);
-        CFont::SetScale(L(0.60f), L(1.2f));
-        CFont::SetOrientation(ALIGN_RIGHT);
-        CFont::SetDropShadowPosition(0);
-        CFont::SetDropColor(CRGBA(0, 0, 0, 255));
-        CFont::SetWrapx(2000.0f); 
+        if (description && description[0]) {
+            char* textToPrint = const_cast<char*>(TheText.Get(const_cast<char*>(description)));
+            if (!textToPrint || !textToPrint[0]) {
+                textToPrint = const_cast<char*>(description);
+            }
+            CFont::SetColor(CRGBA(255, 255, 255, 255));
 
-        CFont::SetColor(CRGBA(0, 0, 0, 255));
-        CFont::PrintString(LX(x + 87.8f - 15.0f + shadowOffset), L(y + 100.0f + shadowOffset), text);
-        CFont::SetColor(CRGBA(255, 255, 255, 255));
-        CFont::PrintString(LX(x + 87.8f - 15.0f), L(y + 100.0f), text);
+            CFont::PrintString(x + Res(3.0f), y, textToPrint);
+        }
     }
 
     static void __cdecl MyDrawProgressBar(float x, float y, unsigned short width, unsigned char height, float progress,
         signed char progressAdd, unsigned char drawPercentage, unsigned char drawBlackBorder,
         CRGBA color, CRGBA addColor)
     {
-        bool bIsMissionBar = (x > 1000.0f && !FrontEndMenuManager.m_bMenuActive);
+        if (x > (float)RsGlobal.maximumWidth * 0.5f && bLoaded && !FrontEndMenuManager.m_bMenuActive) {
+            float barW = Res(11.0f);
+            float barMaxH = Res(196.0f);
+            float safeProgress = std::clamp(progress, 0.0f, 100.0f);
+            float progressHeight = (barMaxH * safeProgress) / 100.0f;
 
-        if (bIsMissionBar && bLoaded) {
-            float fWidth = 18.0f;
-            float fHeight = 243.0f;
-            float drawX = x + 86.8f;
-            float drawY = y;
-
-            float pad = 4.0f;
-            float innerH = fHeight - (pad * 2.0f);
-
-            float safeProgress = progress;
-            if (safeProgress > 100.0f) safeProgress = 100.0f;
-            if (safeProgress < 0.0f) safeProgress = 0.0f;
-
-            float progressHeight = (innerH * safeProgress) / 100.0f;
-
-            CSprite2d::DrawRect(CRect(LX(drawX + pad), L(drawY + pad), LX(drawX + fWidth - pad), L(drawY + fHeight - pad)), CRGBA(10, 35, 8, 200));
+            CSprite2d::DrawRect(CRect(x, y - barMaxH, x + barW, y), CRGBA(10, 35, 8, 150));
             if (safeProgress > 0.0f) {
-                CSprite2d::DrawRect(CRect(LX(drawX + pad), L((drawY + fHeight - pad) - progressHeight), LX(drawX + fWidth - pad), L(drawY + fHeight - pad)), CRGBA(33, 146, 21, 255));
+                CSprite2d::DrawRect(CRect(x, y - progressHeight, x + barW, y), CRGBA(33, 146, 21, 200));
             }
-            outlineSprite.Draw(CRect(LX(drawX), L(drawY), LX(drawX + fWidth), L(drawY + fHeight)), CRGBA(255, 255, 255, 255));
+            outlineSprite.Draw(CRect(x - Res(3.0f), y - barMaxH - Res(4.0f), x + barW + Res(3.0f), y + Res(4.0f)), CRGBA(255, 255, 255, 255));
         }
         else {
-            CSprite2d::DrawRect(CRect(x, y, x + (float)width, y + (float)height), CRGBA(0, 0, 0, 150));
-            float clampedProgress = progress;
-            if (clampedProgress > 100.0f) clampedProgress = 100.0f;
-            if (clampedProgress < 0.0f) clampedProgress = 0.0f;
+            float fWidth = (float)width;
+            float fHeight = (float)height;
+            float outlineThickness = 3.0f; 
+
+            CSprite2d::DrawRect(
+                CRect(x - outlineThickness, y - outlineThickness, x + fWidth + outlineThickness, y + fHeight + outlineThickness),
+                CRGBA(0, 0, 0, 255)
+            );
+            CSprite2d::DrawRect(CRect(x, y, x + (float)width, y + (float)height), CRGBA(20, 20, 20, 255));
+
+            float clampedProgress = std::clamp(progress, 0.0f, 100.0f);
             float fill = ((float)width * clampedProgress) / 100.0f;
-            CSprite2d::DrawRect(CRect(x, y, x + fill, y + (float)height), color);
+
+            CSprite2d::DrawRect(CRect(x, y, x + fill, y + (float)height), HudColour.GetRGB(HUD_COLOUR_BLUELIGHT, 255));
         }
     }
 };
 
 CSprite2d MHudTimer::outlineSprite;
 bool MHudTimer::bLoaded = false;
-MHudTimer manhuntHudModa;
+MHudTimer manhuntHudTimerInstance;
