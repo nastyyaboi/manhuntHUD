@@ -33,8 +33,8 @@ public:
     }
 
     MHudTimer() {
-        patch::RedirectCall(0x58FBEE, MyDrawMissionTimers);
-        patch::RedirectJump(0x728640, MyDrawProgressBar);
+        patch::RedirectCall(0x58FBEE, MissionTimers);
+        patch::RedirectJump(0x728640, ProgressBar);
 
         Events::initRwEvent += [] {
             std::string modPath = GetModFolder();
@@ -55,7 +55,7 @@ public:
             };
     }
 
-    static void __cdecl MyDrawMissionTimers() {
+    static void __cdecl MissionTimers() {
         if ((CHud::m_BigMessage[4][0] && !CHud::bScriptForceDisplayWithCounters) || CGarages::MessageIDString[0])
             return;
 
@@ -104,7 +104,7 @@ public:
 
                     float progress = (float)atoi(CUserDisplay::OnscnTimer.m_aCounters[i].m_szDisplayedText);
 
-                    MyDrawProgressBar(barPosX, textBaseY, 100, 20, progress, 0, 0, 0,
+                    ProgressBar(barPosX, textBaseY, 100, 20, progress, 0, 0, 0,
                         HudColour.GetRGB(CUserDisplay::OnscnTimer.m_aCounters[i].m_nColourId, 255), CRGBA(0, 0, 0, 0));
 
 
@@ -164,7 +164,7 @@ public:
         }
     }
 
-    static void __cdecl MyDrawProgressBar(float x, float y, unsigned short width, unsigned char height, float progress,
+    static void __cdecl ProgressBar(float x, float y, unsigned short width, unsigned char height, float progress,
         signed char progressAdd, unsigned char drawPercentage, unsigned char drawBlackBorder,
         CRGBA color, CRGBA addColor)
     {
@@ -178,7 +178,7 @@ public:
             if (safeProgress > 0.0f) {
                 CSprite2d::DrawRect(CRect(x, y - progressHeight, x + barW, y), CRGBA(33, 146, 21, 200));
             }
-            outlineSprite.Draw(CRect(x - Res(3.0f), y - barMaxH - Res(4.0f), x + barW + Res(3.0f), y + Res(4.0f)), CRGBA(255, 255, 255, 255));
+            outlineSprite.Draw(CRect(x - Res(3.0f) - 0.5f, y - barMaxH - Res(4.0f) - 0.5f, x + barW + Res(3.0f) + 0.5f, y + Res(4.0f) + 0.5f), CRGBA(255, 255, 255, 255));
         }
         else {
             float fWidth = (float)width;
@@ -201,4 +201,4 @@ public:
 
 CSprite2d MHudTimer::outlineSprite;
 bool MHudTimer::bLoaded = false;
-MHudTimer manhuntHudTimerInstance;
+MHudTimer timer;

@@ -84,6 +84,10 @@ public:
         LoadConfig();
         patch::Nop(0x58F441, 5);
 
+        Events::drawHudEvent += [] {
+            MHud::DrawBars();
+            };
+
         Events::initRwEvent += [] {
             std::string modPath = GetModFolder();
             int txdSlot = CTxdStore::AddTxdSlot("mhud");
@@ -168,7 +172,8 @@ public:
     }
 
     static void DrawBars() {
-        if (!g_bFinalHudStatus) return;
+        if (!g_bFinalHudStatus || FrontEndMenuManager.m_bMenuActive) return;
+        if (TheCamera.m_bWideScreenOn || CHud::bScriptDontDisplayRadar) return;
         if (TheCamera.m_bWideScreenOn || *(bool*)0xB5F138) return;
         CPlayerPed* player = FindPlayerPed();
         if (!player || !player->m_pPlayerData || !outlineSprite.m_pTexture) return;
@@ -196,7 +201,7 @@ public:
         int weaponId = static_cast<int>(activeWep.m_eWeaponType);
 
         CRGBA headerColor(255, 255, 255, 200);
-        if (weaponId >= 0 && weaponId <= 9) headerColor = CRGBA(0, 255, 0, 200);
+        if (weaponId >= 0 && weaponId <= 9) headerColor = CRGBA(168, 235, 76, 200);
         else if (weaponId >= 10 && weaponId <= 15) headerColor = CRGBA(255, 20, 147, 200);
         else if ((weaponId >= 16 && weaponId <= 18) || weaponId == 39) headerColor = CRGBA(255, 255, 0, 200);
         else if (weaponId >= 22 && weaponId <= 24) headerColor = CRGBA(0, 100, 255, 200);
@@ -308,13 +313,23 @@ public:
 
         DrawRoundedBar(hX, hY, barW, barMaxH, CRGBA(26, 32, 15, 150)); 
         DrawRoundedBar(hX, hY, barW, barMaxH * healthPerc, CRGBA(194, 252, 116, 200));
-        outlineSprite.Draw(CRect(hX - Res(3.0f), hY - barMaxH - Res(4.0f), hX + barW + Res(3.0f), hY + Res(4.0f)), CRGBA(255, 255, 255, 255));
+        outlineSprite.Draw(
+            CRect(hX - Res(3.0f) - 0.5f,
+                hY - barMaxH - Res(4.0f) - 0.5f,
+                hX + barW + Res(3.0f) + 0.5f,
+                hY + Res(4.0f) + 0.5f),
+            CRGBA(255, 255, 255, 255)
+        );
 
         if (player->m_fArmour > 1.0f) {
             float aX = hX - Res(23.0f);
             DrawRoundedBar(aX, hY, barW, barMaxH, CRGBA(37, 35, 19, 150));
             DrawRoundedBar(aX, hY, barW, barMaxH * armorPerc, CRGBA(255, 254, 161, 200));
-            outlineSprite.Draw(CRect(aX - Res(3.0f), hY - barMaxH - Res(4.0f), aX + barW + Res(3.0f), hY + Res(4.0f)), CRGBA(255, 255, 255, 255));
+            outlineSprite.Draw(CRect(aX - Res(3.0f) - 0.5f,
+                hY - barMaxH - Res(4.0f) - 0.5f,
+                aX + barW + Res(3.0f) + 0.5f,
+                hY + Res(4.0f) + 0.5f),
+                CRGBA(255, 255, 255, 255));
         }
 
         float currentBreath = player->m_pPlayerData->m_fBreath;
@@ -336,7 +351,11 @@ public:
                 float bX = (player->m_fArmour > 1.0f) ? (hX - Res(46.0f)) : (hX - Res(23.0f));
                 DrawRoundedBar(bX, hY, barW, barMaxH, CRGBA(0, 10, 30, 150));
                 DrawRoundedBar(bX, hY, barW, barMaxH * breathPerc, CRGBA(0, 50, 160, 220));
-                outlineSprite.Draw(CRect(bX - Res(3.0f), hY - barMaxH - Res(4.0f), bX + barW + Res(3.0f), hY + Res(4.0f)), CRGBA(255, 255, 255, 255));
+                outlineSprite.Draw(CRect(bX - Res(3.0f) - 0.5f,
+                    hY - barMaxH - Res(4.0f) - 0.5f,
+                    bX + barW + Res(3.0f) + 0.5f,
+                    hY + Res(4.0f) + 0.5f),
+                    CRGBA(255, 255, 255, 255));
             }
         }
         lastBreath = currentBreath;

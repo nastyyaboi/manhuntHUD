@@ -7,6 +7,7 @@
 #include "CTimer.h"
 #include "CCutsceneMgr.h"
 #include "CCamera.h"
+#include "CHud.h"
 #include "extensions/ScriptCommands.h"
 #include <string>
 
@@ -73,10 +74,10 @@ public:
         float hY = (float)RsGlobal.maximumHeight - Res(55.0f);
         float xOffset = Res(100.0f);
 
-        if (state == 0) xOffset -= Res(30.0f);
-        else if (state == 1) xOffset -= Res(20.0f);
-        else if (state == 2) xOffset -= Res(9.0f);
-        else if (state == 4) xOffset -= Res(22.0f);
+        if (state == 0) xOffset -= Res(26.0f);
+        else if (state == 1) xOffset -= Res(12.0f);
+        else if (state == 2) xOffset -= Res(6.0f);
+        else if (state == 4) xOffset -= Res(19.0f);
 
         if (player->m_fArmour > 1.0f) xOffset += Res(23.0f);
         if (breathVisibilityTimerShared > 0.0f) xOffset += Res(23.0f);
@@ -96,6 +97,7 @@ public:
 
     static void Draw() {
         if (CCutsceneMgr::ms_cutsceneProcessing || TheCamera.m_bWideScreenOn || !g_bFinalHudStatus) return;
+        if (TheCamera.m_bWideScreenOn || CHud::bScriptDontDisplayRadar) return;
 
         CPlayerPed* player = FindPlayerPed();
         if (!player || !bLoaded) return;

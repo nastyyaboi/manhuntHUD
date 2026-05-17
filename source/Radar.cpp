@@ -2,6 +2,7 @@
 #include "common.h"
 #include "CMenuManager.h"
 #include "CTxdStore.h"
+#include "CRadar.h"
 #include "CSprite2d.h"
 #include "CPed.h"
 #include "CVehicle.h"
@@ -10,22 +11,24 @@
 
 using namespace plugin;
 
+static RwTexture* (__cdecl* _RwTextureRead)(const char*, const char*) = (RwTexture * (__cdecl*)(const char*, const char*))0x7F3AC0;
 static bool isLoaded = false;
 static CSprite2d mHudSprite;
 static CSprite2d mBarFrame;
+static RwTexture* pMapDirTex = nullptr;
 
 const CVector2D mHudPos(195.5f, 183.5f);
 const float mHudBaseSize = 93.0f;
 const float mHudRingSize = 100.0f;
 
-
 #define screenHeight (static_cast<float>(RsGlobal.maximumHeight))
 #define screenRes(val) (static_cast<float>(val) * (screenHeight / 900.0f))
 
-void RotateVertices(CVector2D* rect, unsigned int numVerts, float x, float y, float angle)
-{
+void RotateVertices(CVector2D* rect, unsigned int numVerts, float x, float y, float angle) {
     float _cos = cosf(angle);
-    float _sin = sinf(angle);
+    float _sin = cosf(angle);
+    _sin = sinf(angle);
+
     for (unsigned int i = 0; i < numVerts; i++) {
         float xold = rect[i].x;
         float yold = rect[i].y;
@@ -34,7 +37,7 @@ void RotateVertices(CVector2D* rect, unsigned int numVerts, float x, float y, fl
     }
 }
 
-class mHudSystem {
+class MHRadar {
 public:
     static int txdIndex;
 
@@ -45,37 +48,54 @@ public:
         GetModuleFileNameA(module, pathBuf, MAX_PATH);
         std::string fullPath(pathBuf);
         size_t pos = fullPath.find_last_of("\\/");
+
         return fullPath.substr(0, pos) + "\\ManhuntHud.SA\\";
     }
 
     static void initiate() {
         if (isLoaded) return;
-        isLoaded = true;
 
-        txdIndex = CTxdStore::AddTxdSlot("mhud_internal");
+        txdIndex = CTxdStore::AddTxdSlot("mhradar_internal");
         std::string dir = fetchPath();
-        if (CTxdStore::LoadTxd(txdIndex, (dir + "MHud.TXD").c_str())) {
+        std::string txdPath = dir + "MHud.TXD";
+
+        if (CTxdStore::LoadTxd(txdIndex, txdPath.c_str())) {
             CTxdStore::AddRef(txdIndex);
             CTxdStore::PushCurrentTxd();
             CTxdStore::SetCurrentTxd(txdIndex);
+
             mHudSprite.SetTexture((char*)"radardisc");
             mBarFrame.SetTexture((char*)"outline_frame");
+
+            pMapDirTex = _RwTextureRead("mapdir", NULL);
+
             CTxdStore::PopCurrentTxd();
+            isLoaded = true;
         }
 
         patch::RedirectCall(0x58AA25, renderHudElement);
         patch::RedirectJump(0x583480, applyHudTranslation);
-        patch::RedirectCall(0x58A551, MyDrawRadarPlane);
-        patch::RedirectCall(0x58A649, MyDrawPlaneHeight);
-        patch::RedirectCall(0x58A77A, MyDrawPlaneHeightBorder);
+        patch::RedirectCall(0x58A551, DrawRadarPlane);
+        patch::RedirectCall(0x58A649, DrawPlaneHeight);
+        patch::RedirectCall(0x58A77A, DrawPlaneHeightBorder);
 
         patch::Nop(0x58A818, 16);
         patch::Nop(0x58A8C2, 16);
         patch::Nop(0x58A96C, 16);
     }
 
+    static void RadarTextures() {
+        if (!isLoaded) return;
+
+        if (pMapDirTex && CRadar::RadarBlipSprites[2].m_pTexture != pMapDirTex) {
+            CRadar::RadarBlipSprites[2].m_pTexture = pMapDirTex;
+        }
+    }
+
     static void __fastcall renderHudElement(CSprite2d* self, int, CRect const& rect, CRGBA const& color) {
         if (!isLoaded || !mHudSprite.m_pTexture) return;
+
+        RadarTextures();
 
         float posX = screenRes(mHudPos.x);
         float posY = screenHeight - screenRes(mHudPos.y);
@@ -102,21 +122,15 @@ public:
         }
     }
 
-    static void __fastcall MyDrawRadarPlane(CSprite2d* sprite, int, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, CRGBA const& color)
-    {
+    static void __fastcall DrawRadarPlane(CSprite2d* sprite, int, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, CRGBA const& color) {
         if (!sprite || !sprite->m_pTexture) return;
 
         float rollAngle = 0.0f;
         CVehicle* veh = FindPlayerVehicle(-1, false);
-
         if (veh && veh->m_matrix) {
-
             float rightZ = veh->m_matrix->right.z;
-
             if (rightZ > 1.0f) rightZ = 1.0f;
             if (rightZ < -1.0f) rightZ = -1.0f;
-
-
             rollAngle = asinf(rightZ);
         }
 
@@ -148,8 +162,7 @@ public:
         return heightNorm;
     }
 
-    static void MyDrawPlaneHeightBorder(CRect const& rect, CRGBA const& color)
-    {
+    static void DrawPlaneHeightBorder(CRect const& rect, CRGBA const& color) {
         if (!mBarFrame.m_pTexture) return;
 
         float x = screenRes(mHudPos.x + mHudRingSize + 15.0f);
@@ -170,8 +183,7 @@ public:
         CSprite2d::DrawRect(CRect(x - barW - screenRes(1.5f), currentY - screenRes(0.5f), x + barW + screenRes(1.5f), currentY + screenRes(0.5f)), CRGBA(255, 255, 255, 255));
     }
 
-    static void MyDrawPlaneHeight(CRect const& rect, CRGBA const& color)
-    {
+    static void DrawPlaneHeight(CRect const& rect, CRGBA const& color) {
         float heightNorm = GetNormalizedPlayerHeight();
         float x = screenRes(mHudPos.x + mHudRingSize + 15.0f);
         float yCenter = screenHeight - screenRes(mHudPos.y);
@@ -192,16 +204,17 @@ public:
             mBarFrame.Delete();
             CTxdStore::RemoveTxdSlot(txdIndex);
             txdIndex = -1;
+            pMapDirTex = nullptr;
         }
     }
 };
 
-int mHudSystem::txdIndex = -1;
+int MHRadar::txdIndex = -1;
 
-class mHudLoader {
+class MHRadarLoad {
 public:
-    mHudLoader() {
-        Events::initRwEvent += [] { mHudSystem::initiate(); };
-        Events::shutdownRwEvent += [] { mHudSystem::release(); };
+    MHRadarLoad() {
+        Events::initRwEvent += [] { MHRadar::initiate(); };
+        Events::shutdownRwEvent += [] { MHRadar::release(); };
     }
-} mHudradar;
+} mhradar;

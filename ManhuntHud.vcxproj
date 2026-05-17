@@ -70,7 +70,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_NON_CONFORMING_SWPRINTFS;TARGET_NAME=R"($(TargetName))";GTASA;GTAGAME_NAME="San Andreas";GTAGAME_ABBR="SA";GTAGAME_ABBRLOW="sa";GTAGAME_PROTAGONISTNAME="CJ";GTAGAME_CITYNAME="San Andreas";_DX9_SDK_INSTALLED;PLUGIN_SGV_10US;RW;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(PLUGIN_SDK_DIR)\plugin_sa;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\plugin_sa\game_sa;E:\plugin-sdk\shared;E:\plugin-sdk\shared\game;E:\plugin-sdk\plugin_sa\game_sa;E:\plugin-sdk\plugin_sa;E:\plugin-sdk\shared\game\;E:\plugin-sdk\plugin_sa\game_sa\enums;E:\plugin-sdk\plugin_sa\game_sa\meta;E:\plugin-sdk\plugin_sa\game_sa\rw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(PLUGIN_SDK_DIR)\plugin_sa;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\plugin_sa\game_sa;E:\plugin-sdk\shared;E:\plugin-sdk\shared\game;E:\plugin-sdk\plugin_sa\game_sa;E:\plugin-sdk\plugin_sa;E:\plugin-sdk\shared\game\;E:\plugin-sdk\plugin_sa\game_sa\enums;E:\plugin-sdk\plugin_sa\game_sa\meta;$(PLUGIN_SDK_DIR)\injector;E:\plugin-sdk\plugin_sa\game_sa\rw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -145,8 +145,11 @@ xcopy /Y "$(TargetPath)" "$(GTA_SA_DIR)\scripts"
     <ClCompile Include="source\Messages.cpp" />
     <ClCompile Include="source\MHCore.cpp" />
     <ClCompile Include="source\MissionTimer.cpp" />
+    <ClCompile Include="source\Pig.cpp" />
     <ClCompile Include="source\Radar.cpp" />
     <ClCompile Include="source\SceneStatus.cpp" />
+    <ClCompile Include="source\Reticle.cpp" />
+    <ClCompile Include="source\StatsTab.cpp" />
     <ClCompile Include="source\Subtitles.cpp" />
     <ClCompile Include="source\VehicleName.cpp" />
     <ClCompile Include="source\WantedLevel.cpp" />

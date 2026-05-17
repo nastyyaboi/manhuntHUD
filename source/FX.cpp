@@ -19,7 +19,7 @@ static std::string GetPluginPath()
     return path.substr(0, path.find_last_of("\\/"));
 }
 
-class FXSystem {
+class FX {
 public:
     static inline bool Enabled = true;
 
@@ -31,11 +31,11 @@ public:
     }
 };
 
-class CRTScanlines {
+class CRT {
 public:
     static void Draw()
     {
-        if (!FXSystem::Enabled) return;
+        if (!FX::Enabled) return;
 
         float spacing = 4.5f;
         float thickness = 2.9f;
@@ -56,7 +56,7 @@ public:
 
     static void Draw()
     {
-        if (!FXSystem::Enabled || !Sprite.m_pTexture) return;
+        if (!FX::Enabled || !Sprite.m_pTexture) return;
 
         float tile = 256.0f * Scale;
         float xo = (float)(rand() % (int)tile) - tile;
@@ -98,7 +98,7 @@ public:
     FXPlugin()
     {
         Events::initGameEvent += [] {
-            FXSystem::LoadConfig();
+            FX::LoadConfig();
             };
 
         Events::initRwEvent += [] {
@@ -106,8 +106,8 @@ public:
             };
 
         Events::drawingEvent += [] {
-            CRTScanlines::Draw();
+            CRT::Draw();
             FilmGrain::Draw();
             };
     }
-} fxPlugin;
+} fx;

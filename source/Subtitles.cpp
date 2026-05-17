@@ -101,4 +101,4 @@ public:
         patch::SetUChar(0x58C250, 0xC3);
         Events::drawingEvent += [] { DrawSubtitles(); };
     }
-} mhSUBS;
+} mhsubs;

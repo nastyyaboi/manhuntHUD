@@ -28,7 +28,6 @@ public:
             nDisplayTimer = 0.0f;
             return;
         }
-
         CPlayerPed* player = FindPlayerPed();
         if (!player) return;
 
@@ -85,11 +84,11 @@ public:
 float VehicleName::nDisplayTimer = 0.0f;
 CVehicle* VehicleName::pLastVehicle = nullptr;
 
-class VehicleNamePlugin {
+class VehName {
 public:
-    VehicleNamePlugin() {
+    VehName() {
         Events::drawHudEvent += [] {
             VehicleName::Draw();
             };
     }
-} vehName;
+} vehiclename;

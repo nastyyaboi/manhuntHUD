@@ -3,6 +3,7 @@
 #include "CClock.h"
 #include "CTimer.h"
 #include "CWorld.h"
+#include "CHud.h"
 #include "CCutsceneMgr.h"
 #include "CCamera.h"
 #include <windows.h>
@@ -15,12 +16,34 @@ extern float breathVisibilityTimerShared;
 extern int nPeekKey;
 extern bool g_bFinalHudStatus;
 
+static std::string GetPluginPath() {
+    char buffer[MAX_PATH];
+    HMODULE hm = NULL;
+    GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+        (LPCSTR)&GetPluginPath, &hm);
+    GetModuleFileNameA(hm, buffer, MAX_PATH);
+    std::string path(buffer);
+    return path.substr(0, path.find_last_of("\\/"));
+}
+
 class GrandfatherClock {
 public:
+    static bool Enabled;
     static float nDisplayTimer;
-    static float Res(float value) { return value * ((float)RsGlobal.maximumHeight / 960.0f); }
+
+    static float Res(float value) {
+        return value * ((float)RsGlobal.maximumHeight / 960.0f);
+    }
+
+    static void LoadConfig() {
+        std::string iniPath = GetPluginPath() + "\\ManhuntHud.SA.ini";
+
+        Enabled = GetPrivateProfileIntA("Settings", "GrandfatherClock", 1, iniPath.c_str()) != 0;
+    }
 
     static void Draw() {
+        if (!Enabled) return;
+
         if (CCutsceneMgr::ms_cutsceneProcessing || TheCamera.m_bWideScreenOn || !g_bFinalHudStatus) {
             nDisplayTimer = 0.0f;
             return;
@@ -29,11 +52,11 @@ public:
         CPlayerPed* player = FindPlayerPed();
         if (!player || !player->m_pPlayerData) return;
 
-        if (GetKeyState(nPeekKey) & 0x8000) nDisplayTimer = 300.0f;
+        if (GetKeyState(nPeekKey) & 0x8000)
+            nDisplayTimer = 300.0f;
 
         if (nDisplayTimer > 0.0f) {
             nDisplayTimer -= CTimer::ms_fTimeStep;
-            float s = (float)RsGlobal.maximumHeight / 1000.0f;
 
             int nAlpha = std::clamp((nDisplayTimer < 20.0f) ? (int)(nDisplayTimer * 12.5f) : 255, 0, 255);
 
@@ -45,12 +68,9 @@ public:
 
             float xOffset = Res(60.0f);
 
-            //if (player->m_fArmour > 1.0f) xOffset += Res(23.0f);
-            //if (breathVisibilityTimerShared > 0.0f) xOffset += Res(23.0f);
-
             CFont::SetOrientation(ALIGN_CENTER);
             CFont::SetFontStyle(FONT_PRICEDOWN);
-            CFont::SetScale(0.8f * s, 1.6f * s);
+            CFont::SetScale(0.8f * Res(1.0f), 1.6f * Res(1.0f));
             CFont::SetColor(CRGBA(255, 255, 255, nAlpha));
 
             CFont::SetDropShadowPosition(1);
@@ -61,11 +81,16 @@ public:
     }
 };
 
+bool GrandfatherClock::Enabled = true;
 float GrandfatherClock::nDisplayTimer = 0.0f;
 
 class GrandfatherClockPlugin {
 public:
     GrandfatherClockPlugin() {
-        Events::drawHudEvent += [] { GrandfatherClock::Draw(); };
+        GrandfatherClock::LoadConfig();
+
+        Events::drawHudEvent += [] {
+            GrandfatherClock::Draw();
+            };
     }
-} grandfatherClockPlugin;
+} grandfatherClock;

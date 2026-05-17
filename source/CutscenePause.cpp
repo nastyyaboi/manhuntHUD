@@ -12,7 +12,7 @@ class CutscenePause {
 public:
     static inline bool bIsPaused = false;
     static inline bool bEnabled = true;
-    static inline unsigned int nCSKey = 80;
+    static inline unsigned int nCSKey = 80; 
     static inline unsigned int lastToggleTime = 0;
     static inline float fFadeAlpha = 0.0f;
     static inline float fVisibilityTimer = 0.0f;
@@ -33,9 +33,17 @@ public:
             };
 
         Events::drawHudEvent += [] {
-            if (!bEnabled || !CCutsceneMgr::ms_running) {
-                if (bIsPaused) ForceUnpause();
-                fFadeAlpha = 0.0f; fVisibilityTimer = 0.0f; bHintShown = false;
+
+            unsigned int cutsceneState = *(unsigned int*)0xB5D4B0;
+
+            if (!bEnabled || !CCutsceneMgr::ms_running || cutsceneState == 3) {
+                if (bIsPaused) {
+                    bIsPaused = false;
+                    CTimer::m_UserPause = false;
+                }
+                fFadeAlpha = 0.0f;
+                fVisibilityTimer = 0.0f;
+                bHintShown = false;
                 return;
             }
 
@@ -66,8 +74,12 @@ public:
             if (bIsPaused) {
                 CTimer::ms_fTimeStep = 0.0f;
                 DrawRGBNoise();
+
                 if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) || (GetAsyncKeyState(VK_LSHIFT) & 0x8000) || (GetAsyncKeyState(VK_RETURN) & 0x8000)) {
-                    ForceUnpause();
+                    bIsPaused = false;
+                    CTimer::m_UserPause = false;
+                    lastToggleTime = GetTickCount();
+                    return;
                 }
             }
 
@@ -79,13 +91,6 @@ private:
     static void ApplyPauseState() {
         lastToggleTime = GetTickCount();
         CTimer::m_UserPause = bIsPaused;
-    }
-
-    static void ForceUnpause() {
-        bIsPaused = false; CTimer::m_UserPause = false; CTimer::ms_fTimeStep = 1.0f;
-        fFadeAlpha = 0.0f; fVisibilityTimer = 0.0f;
-        lastToggleTime = GetTickCount();
-        patch::Set<unsigned int>(0xB7CB84, GetTickCount());
     }
 
     static void DrawCrtBox(CRect rect, float alpha) {
@@ -150,7 +155,7 @@ private:
         float verticalCenter = safeOffsetY + (boxHeight * 0.05f);
 
         CFont::SetColor(CRGBA(255, 255, 255, (unsigned char)fFadeAlpha));
-        CFont::PrintString(safeOffsetX + -2.0f, verticalCenter + -2.0f, displayLine);
+        CFont::PrintString(safeOffsetX - 2.0f, verticalCenter - 2.0f, displayLine);
 
         CFont::SetDropShadowPosition(0);
     }

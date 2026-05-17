@@ -3,6 +3,7 @@
 #include "CMenuManager.h"
 #include "CCamera.h"
 #include "CWorld.h"
+#include "CHud.h"
 #include "CPlayerData.h"
 #include "CSprite2d.h"
 #include "CTxdStore.h"
@@ -95,9 +96,9 @@ float MHWanted::nWantedTimer = 0.0f;
 CSprite2d MHWanted::starSprite;
 int MHWanted::txdSlot = -1;
 
-class WantedPlugin {
+class Wanted {
 public:
-    WantedPlugin() {
+    Wanted() {
         Events::initGameEvent += [] { MHWanted::Init(); };
         Events::shutdownRwEvent += [] { MHWanted::Shutdown(); };
         Events::drawHudEvent += [] {
@@ -105,4 +106,4 @@ public:
             MHWanted::Draw();
             };
     }
-} mhWanted;
+} mhwanted;

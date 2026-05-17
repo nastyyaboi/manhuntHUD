@@ -3,6 +3,7 @@
 #include "CFont.h"
 #include "CCutsceneMgr.h"
 #include "CMenuManager.h"
+#include "CCamera.h"
 #include "CTimer.h"
 #include "CSprite2d.h"
 
@@ -44,6 +45,7 @@ public:
         Events::drawingEvent += [] {
             if (MissionSceneText::bRecapShowing) return;
             if (m_savedZoneName[0] == '\0' || FrontEndMenuManager.m_bMenuActive) return;
+            if (TheCamera.m_bWideScreenOn || CHud::bScriptDontDisplayRadar) return;
 
             if (!g_bFinalHudStatus) {
                 m_visibilityTimer = 0.0f;
@@ -126,4 +128,4 @@ public:
     static void SilenceVehicleName(float x, float y, char* str) {}
 
 };
-MHudArea mhudAreaInstance;
+MHudArea mhcore;

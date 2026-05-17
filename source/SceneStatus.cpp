@@ -296,4 +296,4 @@ public:
         Events::processScriptsEvent += Update;
         Events::drawHudEvent += Draw;
     }
-} gMissionSceneText;
+} missionscenestatus;
