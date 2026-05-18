@@ -41,7 +41,6 @@ static void LoadCustomTexture() {
 
 #define CROSSHAIRS_TOTALSPRITES 4
 enum eCrosshairSprites { CROSSHAIR_M16 = 0, CROSSHAIR_ROCKET = 1, CROSSHAIR_SNIPER = 2, CROSSHAIR_VIEWFINDER = 3 };
-
 CSprite2d CrosshairSprites[CROSSHAIRS_TOTALSPRITES];
 bool ms_bSpritesLoaded = false;
 char* CrosshairsNames[CROSSHAIRS_TOTALSPRITES] = { (char*)"sitem16", (char*)"siterocket", (char*)"scope", (char*)"viewfinder" };
@@ -78,15 +77,6 @@ void Reticle() {
 
     eCamMode Mode = TheCamera.m_aCams[TheCamera.m_nActiveCam].m_nMode;
 
-    if ((int)Mode == 45 || Mode == MODE_AIMWEAPON_ATTACHED) {
-        float x = SCREEN_WIDTH * 0.5f;
-        float y = SCREEN_HEIGHT * 0.5f;
-        float fixedSize = SCREEN_COORD(6.0f);
-        CRect rect(x - fixedSize, y - fixedSize, x + fixedSize, y + fixedSize);
-        CrosshairSprites[CROSSHAIR_M16].Draw(rect, CRGBA(255, 255, 255, 255));
-        return;
-    }
-
     if (Mode == MODE_CAMERA) {
         float size = SCREEN_COORD(512.0f);
         CRect rect(
@@ -98,14 +88,23 @@ void Reticle() {
         CrosshairSprites[CROSSHAIR_VIEWFINDER].Draw(rect, CRGBA(255, 255, 255, 255));
         return;
     }
+    if ((int)Mode == 45) {
+        float x = SCREEN_WIDTH * 0.5f;
+        float y = SCREEN_HEIGHT * 0.5f;
+        float fixedSize = SCREEN_COORD(6.0f);
+        CRect rect(x - fixedSize, y - fixedSize, x + fixedSize, y + fixedSize);
+        CrosshairSprites[CROSSHAIR_M16].Draw(rect, CRGBA(255, 255, 255, 255));
+        return;
+    }
 
     int slot = player->m_nSelectedWepSlot;
     CWeaponInfo* info = CWeaponInfo::GetWeaponInfo(player->m_aWeapons[slot].m_eWeaponType, player->GetWeaponSkill());
     if (!info) return;
 
+
     if (Mode == MODE_AIMWEAPON || Mode == MODE_AIMWEAPON_FROMCAR ||
         Mode == MODE_ROCKETLAUNCHER || Mode == MODE_ROCKETLAUNCHER_HS ||
-        Mode == MODE_SNIPER) {
+        Mode == MODE_SNIPER || Mode == MODE_AIMWEAPON_ATTACHED) {
 
         float x = (float)SCREEN_WIDTH * CCamera::m_f3rdPersonCHairMultX;
         float y = (float)SCREEN_HEIGHT * CCamera::m_f3rdPersonCHairMultY;
@@ -120,6 +119,7 @@ void Reticle() {
             rect.bottom = (SCREEN_HEIGHT / 2.0f) + SCREEN_COORD(sniperSize);
             CrosshairSprites[CROSSHAIR_SNIPER].Draw(rect, CRGBA(255, 255, 255, 255));
         }
+
         else if (info->m_nModelId == 359 || info->m_nModelId == 360) {
             float rocketSize = 80.0f;
             rect.left = (SCREEN_WIDTH / 2.0f) - SCREEN_COORD(rocketSize);
@@ -146,6 +146,7 @@ void Reticle() {
                 static float smoothGap = 0.0f;
                 smoothGap += (targetGap - smoothGap) * 0.15f;
                 CRGBA lockColor(255, 255, 255, 255);
+
                 CSprite2d::DrawRect(CRect(x - (lineThick / 2), y - smoothGap - lineLen, x + (lineThick / 2), y - smoothGap), lockColor);
                 CSprite2d::DrawRect(CRect(x - (lineThick / 2), y + smoothGap, x + (lineThick / 2), y + smoothGap + lineLen), lockColor);
                 CSprite2d::DrawRect(CRect(x - smoothGap - lineLen, y - (lineThick / 2), x - smoothGap, y + (lineThick / 2)), lockColor);
@@ -166,10 +167,10 @@ public:
     ReticleEmpty() {
         Events::initRwEvent += []() { LoadCustomTexture(); };
         Events::initGameEvent += []() {
-            patch::PutRetn(0x58E020); 
+            patch::PutRetn(0x58E020);
             CHudNew::Initialise();
             };
-        Events::reInitGameEvent += []() { };
+        Events::reInitGameEvent += []() {};
         Events::drawingEvent += []() { Reticle(); };
         Events::shutdownRwEvent += []() { CHudNew::Shutdown(); };
     }
